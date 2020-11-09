@@ -39,40 +39,41 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
 
     function updateScoreTable(scoreTable, game, currentPlayerId) {
         const maxResults = 10;
+        const playersArray = game.getPlayersArray();
 
-        let scoreTableInnerHTML = `
+        if (playersArray) {
+
+            let scoreTableInnerHTML = `
             <tr class="header">
                 <td>Top 10 Jogadores</td>
                 <td>Pontos</td>
             </tr>`
 
-        const playersArray = game.getPlayersArray();
+            const playerSortedByScore = playersArray.sort((first, second) => {
+                if (first.score < second.score) {
+                    return 1;
+                }
+                if (first.score > second.score) {
+                    return -1;
+                }
+                return 0;
+            });
 
-        const playerSortedByScore = playersArray.sort((first, second) => {
-            if (first.score < second.score) {
-                return 1;
-            }
-            if (first.score > second.score) {
-                return -1;
-            }
-            return 0;
-        });
+            const topScorePlayers = playerSortedByScore.slice(0, maxResults);
 
-        const topScorePlayers = playerSortedByScore.slice(0, maxResults);
-
-        scoreTableInnerHTML = topScorePlayers.reduce((stringFormed, player) => {
-            return stringFormed + `
+            scoreTableInnerHTML = topScorePlayers.reduce((stringFormed, player) => {
+                return stringFormed + `
                 <tr ${player.playerId === currentPlayerId ? 'class="current-player"' : ''}>
                     <td class="player-id">${player.playerName}</td>
                     <td class="player-score">${player.score}</td>
                 </tr>
             `
-        }, scoreTableInnerHTML);
+            }, scoreTableInnerHTML);
 
-        const currentPlayerScore = playersArray.find((player) => player.playerId === currentPlayerId);
+            const currentPlayerScore = playersArray.find((player) => player.playerId === currentPlayerId);
 
-        if (currentPlayerScore) {
-            scoreTableInnerHTML += `
+            if (currentPlayerScore) {
+                scoreTableInnerHTML += `
                 <tr>
                     <td></td>
                 </tr>
@@ -84,8 +85,9 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
                     <td class="score-value player-score">${currentPlayerScore.score}</td>
                 </tr>
             `
-        }
+            }
 
-        scoreTable.innerHTML = scoreTableInnerHTML;
+            scoreTable.innerHTML = scoreTableInnerHTML;
+        }
     }
 }
