@@ -2,21 +2,22 @@ import { mod } from './utils.js';
 
 export default function createGame() {
     'use strict'
-    
+
     const state = {
         players: {},
         fruits: {},
+        fruitLimit: 50,
+        fruitFrequency: 2000,
         screen: {
-            width: 10,
-            height: 10
+            width: 15,
+            height: 15
         }
     }
 
     const observers = [];
 
     function start() {
-        const frequency = 2000;
-        setInterval(addFruit, frequency);
+        setInterval(addFruit, state.fruitFrequency);
     }
 
     function subscribe(observerFunction) {
@@ -67,21 +68,25 @@ export default function createGame() {
     }
 
     function addFruit(command) {
-        const fruitId = command ? command.fruitId : Math.floor(Math.random() * 100000000);
-        const fruitX = command ? command.fruitX : Math.floor(Math.random() * state.screen.width);
-        const fruitY = command ? command.fruitY : Math.floor(Math.random() * state.screen.height);
+        const fruitLimit = state.fruitLimit;
+        const fruitsInGame = Object.keys(state.fruits).length;
+        if (!fruitLimit || fruitsInGame < fruitLimit) {
+            const fruitId = command ? command.fruitId : Math.floor(Math.random() * 100000000);
+            const fruitX = command ? command.fruitX : Math.floor(Math.random() * state.screen.width);
+            const fruitY = command ? command.fruitY : Math.floor(Math.random() * state.screen.height);
 
-        state.fruits[fruitId] = {
-            x: fruitX,
-            y: fruitY
+            state.fruits[fruitId] = {
+                x: fruitX,
+                y: fruitY
+            }
+
+            notifyAll({
+                type: 'add-fruit',
+                fruitId,
+                fruitX,
+                fruitY
+            });
         }
-
-        notifyAll({
-            type: 'add-fruit',
-            fruitId,
-            fruitX,
-            fruitY
-        });
     }
 
     function removeFruit(command) {
@@ -119,21 +124,60 @@ export default function createGame() {
 
         if (player && moveFunction) {
             moveFunction(player);
-            checkForFruitCollision(playerId);
+            checkForPlayerFruitCollision(playerId);
         }
     }
 
-    function checkForFruitCollision(playerId) {
+    function checkForPlayerFruitCollision(playerId) {
         const player = state.players[playerId];
+        checkForObjectCollisionWithObjects(player, state.fruits, (fruitId) => {
+            removeFruit({ fruitId });
+            player.score++;
+        });
+    }
 
-        for (const fruitId in state.fruits) {
-            const fruit = state.fruits[fruitId];
-
-            if (player.x === fruit.x && player.y === fruit.y) {
-                removeFruit({ fruitId });
-                player.score++;
+    function checkForObjectCollisionWithObjects(object1, objects, callback, returnOnFirst = false) {
+        const returns = [];
+        for (const object2 in objects) {
+            let object2Props = objects[object2];
+            if (checkForObjectCollision(object1, object2Props)) {
+                returns.push(object2);
+                if (returnOnFirst) {
+                    break;
+                }
             }
         }
+        if (!callback) {
+            return returns;
+        } else {
+            returns.forEach((element, index) => {
+                callback(element, index);
+            });
+        }
+    }
+
+    function checkForObjectCollision(object1, object2) {
+        return checkForCollision(object1.x, object1.y, object2.x, object2.y);
+    }
+
+    function checkForCollision(object1X, object1Y, object2X, object2Y) {
+        return (object1X === object2X && object1Y === object2Y);
+    }
+
+    function getPlayersArray() {
+        const playersArray = [];
+        for (let playerId in state.players) {
+            const player = state.players[playerId];
+            playersArray.push({
+                playerId: playerId,
+                x: player.x,
+                y: player.y,
+                score: player.score,
+                playerName: player.playerName
+            });
+        }
+
+        return playersArray;
     }
 
     return {
@@ -145,6 +189,7 @@ export default function createGame() {
         state,
         setState,
         subscribe,
-        start
+        start,
+        getPlayersArray
     }
 }

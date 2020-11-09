@@ -1,5 +1,5 @@
 'use strict'
-    
+
 import express from 'express';
 import http from 'http';
 import createGame from './public/game.js';
@@ -21,7 +21,15 @@ game.subscribe((command) => {
 
 sockets.on('connect', (socket) => {
     const playerId = socket.id;
-    const playerName = socket.handshake.query.userName
+    const playerName = socket.handshake.query.userName;
+    const playersArray = game.getPlayersArray();
+    const duplicateName = playersArray.find((player) => player.playerName === playerName);
+    console.log(game);
+
+    if (!playerName || duplicateName) {
+        socket.emit('duplicate-player-name', { type: 'duplicate-player-name' });
+        return;
+    }
 
     game.addPlayer({ playerId: playerId, playerName: playerName });
     console.log(`> Player connected on Server with id: ${playerId} and name: ${playerName}`);
@@ -33,7 +41,7 @@ sockets.on('connect', (socket) => {
         console.log(`> Player disconnected: ${playerId}`);
     });
 
-    socket.on('move-player', (command) =>{
+    socket.on('move-player', (command) => {
         command.playerId = playerId;
         command.type = 'move-player';
 

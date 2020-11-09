@@ -46,17 +46,7 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
                 <td>Pontos</td>
             </tr>`
 
-        const playersArray = [];
-        for (let socketId in game.state.players) {
-            const player = game.state.players[socketId];
-            playersArray.push({
-                playerId: socketId,
-                x: player.x,
-                y: player.y,
-                score: player.score,
-                playerName: player.playerName
-            });
-        }
+        const playersArray = game.getPlayersArray();
 
         const playerSortedByScore = playersArray.sort((first, second) => {
             if (first.score < second.score) {
@@ -79,9 +69,9 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
             `
         }, scoreTableInnerHTML);
 
-        const currentPlayerFromTopScore = topScorePlayers.find((player) => player.playerId === currentPlayerId);
+        const currentPlayerScore = playersArray.find((player) => player.playerId === currentPlayerId);
 
-        if (currentPlayerFromTopScore) {
+        if (currentPlayerScore) {
             scoreTableInnerHTML += `
                 <tr>
                     <td></td>
@@ -90,8 +80,8 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
                     <td>My Score</td>
                 </tr>
                 <tr class="current-player bottom">
-                    <td class="socket-id player-id">${currentPlayerFromTopScore.playerName}</td>
-                    <td class="score-value player-score">${currentPlayerFromTopScore.score}</td>
+                    <td class="socket-id player-id">${currentPlayerScore.playerName}</td>
+                    <td class="score-value player-score">${currentPlayerScore.score}</td>
                 </tr>
             `
         }

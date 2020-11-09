@@ -94,83 +94,110 @@
         import createKeyboardListener from './keyboard-listener.js';
         import renderScreen, { setupScreen } from './render-screen.js';
 
-        try {
-            const playerName = getNickName();
-            const game = createGame();
-            const keyboardListener = createKeyboardListener(document);
-
-            const socket = io({
-                query: {
-                    userName: playerName
+        window.addEventListener('load', () => {
+            try {
+                let playerName = getPlayerName();
+                if (!playerName) {
+                    if (window.confirm('Pra jogar escolha um nome!')) {
+                        location.reload();
+                    }
                 }
-            });
+                else {
+                    init();
 
-            socket.on('connect', () => {
-                const playerId = socket.id;
+                    function init() {
+                        const game = createGame();
+                        const keyboardListener = createKeyboardListener(document);
 
-                const screen = document.getElementById('screen');
-                const scoreTable = document.getElementById('score-table');
+                        screen = document.getElementById('screen');
+                        screen.width = game.state.screen.width;
+                        screen.height = game.state.screen.height;
 
-                setupScreen(screen, game);
-                renderScreen(screen, scoreTable, game, requestAnimationFrame, playerId);
-            });
+                        const socket = io({
+                            query: {
+                                userName: playerName
+                            }
+                        });
 
-            socket.on('disconnect', () => {
-                console.log('Unsubscribing All')
-                keyboardListener.unsubscribeAll();
-            });
+                        socket.on('connect', () => {
+                            const playerId = socket.id;
 
-            socket.on('setup', (state) => {
-                const playerId = socket.id;
-                game.setState(state);
+                            const screen = document.getElementById('screen');
+                            const scoreTable = document.getElementById('score-table');
 
-                keyboardListener.registerPlayerId(playerId);
-                keyboardListener.subscribe(game.movePlayer);
-                keyboardListener.subscribe((command) => {
-                    socket.emit('move-player', command);
-                });
-            });
+                            setupScreen(screen, game);
+                            renderScreen(screen, scoreTable, game, requestAnimationFrame, playerId);
+                        });
 
-            socket.on('add-player', (command) => {
-                console.log(`Receiving ${command.type} -> ${command.playerId}`);
-                game.addPlayer(command);
-            });
+                        socket.on('disconnect', () => {
+                            console.log('Unsubscribing All')
+                            keyboardListener.unsubscribeAll();
+                        });
 
-            socket.on('remove-player', (command) => {
-                console.log(`Removing ${command.type} -> ${command.playerId}`);
-                game.removePlayer(command);
-            });
+                        socket.on('setup', (state) => {
+                            const playerId = socket.id;
+                            game.setState(state);
 
-            socket.on('move-player', (command) => {
-                console.log(`Receiving ${command.type} -> ${command.playerId}`);
+                            keyboardListener.registerPlayerId(playerId);
+                            keyboardListener.subscribe(game.movePlayer);
+                            keyboardListener.subscribe((command) => {
+                                socket.emit('move-player', command);
+                            });
+                        });
 
-                const playerId = socket.id;
-                if (playerId !== command.playerId) {
-                    game.movePlayer(command);
+                        socket.on('add-player', (command) => {
+                            console.log(`Receiving ${command.type} -> ${command.playerId}`);
+                            game.addPlayer(command);
+                        });
+
+                        socket.on('remove-player', (command) => {
+                            console.log(`Removing ${command.type} -> ${command.playerId}`);
+                            game.removePlayer(command);
+                        });
+
+                        socket.on('move-player', (command) => {
+                            console.log(`Receiving ${command.type} -> ${command.playerId}`);
+
+                            const playerId = socket.id;
+                            if (playerId !== command.playerId) {
+                                game.movePlayer(command);
+                            }
+                        });
+
+                        socket.on('add-fruit', (command) => {
+                            console.log(`Receiving ${command.type} -> ${command.fruitId}`);
+                            game.addFruit(command);
+                        });
+
+                        socket.on('remove-fruit', (command) => {
+                            console.log(`Receiving ${command.type} -> ${command.fruitId}`);
+                            game.removeFruit(command);
+                        });
+
+                        socket.on('duplicate-player-name', (command) => {
+                            console.log(`Receiving ${command.type}`);
+                            playerName = getPlayerName('Your name alredy exists, please choose another');
+                            socket.disconnect();
+                            init();
+                        });
+                    }
                 }
-            });
 
-            socket.on('add-fruit', (command) => {
-                console.log(`Receiving ${command.type} -> ${command.fruitId}`);
-                game.addFruit(command);
-            });
+                function getPlayerName(message = '') {
+                    let playerName = window.prompt(message || 'Choose your name');
+                    if (playerName) {
+                        return playerName;
+                    }
+                    else if (playerName === '') {
+                        return getPlayerName(message);
+                    }
 
-            socket.on('remove-fruit', (command) => {
-                console.log(`Receiving ${command.type} -> ${command.fruitId}`);
-                game.removeFruit(command);
-            });
-
-            function getNickName() {
-                const name = window.prompt('Change your name');
-                if (name) {
-                    return name;
+                    return;
                 }
-
-                getNickName();
+            } catch (e) {
+                console.log(e);
             }
-        } catch (e) {
-            console.log(e);
-        }
+        });
     </script>
 </body>
 
