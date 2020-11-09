@@ -21,9 +21,10 @@ game.subscribe((command) => {
 
 sockets.on('connect', (socket) => {
     const playerId = socket.id;
+    const playerName = socket.handshake.query.userName
 
-    game.addPlayer({ playerId: playerId });
-    console.log(`> Player connected on Server with id: ${playerId}`);
+    game.addPlayer({ playerId: playerId, playerName: playerName });
+    console.log(`> Player connected on Server with id: ${playerId} and name: ${playerName}`);
 
     socket.emit('setup', game.state);
 

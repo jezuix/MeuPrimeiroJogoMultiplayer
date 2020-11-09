@@ -88,15 +88,22 @@
     <table id="score-table"></table>
 
     <script type="module">
+        'use strict'
+
         import createGame from './game.js';
         import createKeyboardListener from './keyboard-listener.js';
         import renderScreen, { setupScreen } from './render-screen.js';
 
         try {
+            const playerName = getNickName();
             const game = createGame();
             const keyboardListener = createKeyboardListener(document);
 
-            const socket = io();
+            const socket = io({
+                query: {
+                    userName: playerName
+                }
+            });
 
             socket.on('connect', () => {
                 const playerId = socket.id;
@@ -152,6 +159,15 @@
                 console.log(`Receiving ${command.type} -> ${command.fruitId}`);
                 game.removeFruit(command);
             });
+
+            function getNickName() {
+                const name = window.prompt('Change your name');
+                if (name) {
+                    return name;
+                }
+
+                getNickName();
+            }
         } catch (e) {
             console.log(e);
         }

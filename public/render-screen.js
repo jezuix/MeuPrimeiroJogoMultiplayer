@@ -1,5 +1,6 @@
 export function setupScreen(canvas, game) {
     'use strict'
+
     const { screen: { width, height } } = game.state;
     canvas.width = width;
     canvas.height = height;
@@ -52,7 +53,8 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
                 playerId: socketId,
                 x: player.x,
                 y: player.y,
-                score: player.score
+                score: player.score,
+                playerName: player.playerName
             });
         }
 
@@ -71,7 +73,7 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
         scoreTableInnerHTML = topScorePlayers.reduce((stringFormed, player) => {
             return stringFormed + `
                 <tr ${player.playerId === currentPlayerId ? 'class="current-player"' : ''}>
-                    <td class="player-id">${player.playerId}</td>
+                    <td class="player-id">${player.playerName}</td>
                     <td class="player-score">${player.score}</td>
                 </tr>
             `
@@ -88,7 +90,7 @@ export default function renderScreen(screen, scoreTable, game, requestAnimationF
                     <td>My Score</td>
                 </tr>
                 <tr class="current-player bottom">
-                    <td class="socket-id player-id">${currentPlayerFromTopScore.playerId}</td>
+                    <td class="socket-id player-id">${currentPlayerFromTopScore.playerName}</td>
                     <td class="score-value player-score">${currentPlayerFromTopScore.score}</td>
                 </tr>
             `
